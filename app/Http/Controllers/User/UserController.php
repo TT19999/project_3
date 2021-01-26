@@ -16,19 +16,19 @@ class UserController extends Controller
     public function index(){
         $user = JWTAuth::parseToken() ->authenticate();
         if($user->can("viewAny",Profile::class)){
-            $users=User::with("profile")->withTrashed()->get();
+            $users=User::with("profile")->with('roles')->withCount('sets','follower')->withTrashed()->get();
             return response()->json([
                 "users" => $users,
             ],200);
         }
         else return response()->json([
-             "errors" => "You can do this action",
+            "errors" => "You can do this action",
         ],403);
     }
 
     public function show(Request  $request){
         $user = JWTAuth::parseToken() ->authenticate();
-        $userShow = User::with("skills")->with("profile")->find($request->id);
+        $userShow = User::with("profile")->with('sets')->withCount('sets')->withTrashed()->find($request->id);
         if($userShow != null ){
             $profile = $userShow->profile;
             if($user->can('view', $profile)){
@@ -38,12 +38,12 @@ class UserController extends Controller
             }
             return response()->json([
                 "errors"=>"Thông tin cá nhân không công khai",
-            ],500);
+            ],403);
         }
         else {
             return response()->json([
                 'errors' => "người dùng không tồn tại",
-            ],400);
+            ],404);
         }
     }
 
@@ -60,7 +60,7 @@ class UserController extends Controller
         }
         return response()->json([
             'errors' => "Khong co nguoi dung",
-        ],400);
+        ],404);
     }
 
     public function delete(Request $request){
@@ -72,11 +72,11 @@ class UserController extends Controller
             $user->delete();
             return response()->json([
                 "message" => "xoa nguoi dung thanh cong"
-            ],200);
+            ],201);
         }
         return response()->json([
             'errors' => "Khong co nguoi dung",
-        ],400);
+        ],404);
     }
 
 }
